@@ -6,4 +6,4 @@
 실행 결과
 ![image](https://github.com/user-attachments/assets/feb1f1ad-dd53-4da9-a16e-e07962e60c54)
 
-#프로그램의 전체적인 틀과 광선과 물체가 충돌점 계산은 ai를 사용하였습니다
+#코드의 전체적인 틀은 예시 코드를 사용하였고 광선과 물체의 충돌점 계산 함수 및 문법적인 부분은 ai를 참고하여 만들었습니다
