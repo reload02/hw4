@@ -20,44 +20,153 @@ using namespace glm;
 // -------------------------------------------------
 // Global Variables
 // -------------------------------------------------
-int Width = 1280;
-int Height = 720;
+int Width = 512;
+int Height = 512;
 std::vector<float> OutputImage;
 // -------------------------------------------------
+
+struct Ray {
+	vec3 origin;
+	vec3 direction;
+};
+
+struct Intersection {
+	bool hit;
+	float distance;
+};
+class Surface {
+public:
+	virtual ~Surface() {}
+	virtual Intersection intersect(const Ray& ray) const = 0;
+};
+
+class Plane : public Surface {
+public:
+	vec3 normal; //법선 벡터
+	float d; // 상수
+
+	Plane(vec3 n, float d_) : normal(glm::normalize(n)), d(d_) {}
+
+
+	Intersection intersect(const Ray& ray) const override {
+		float denom = glm::dot(normal, ray.direction);
+		if (fabs(denom) > 1e-6) {
+			float t = -(glm::dot(normal, ray.origin) + d) / denom;
+			if (t >= 0.001f) return { true, t };
+		}
+		return { false, 0 };
+	}
+};
+
+class Sphere : public Surface {
+public:
+	vec3 center;
+	float radius;
+
+	Sphere(const vec3& c, float r) : center(c), radius(r) {}
+
+
+	Intersection intersect(const Ray& ray) const override {
+		glm::vec3 oc = ray.origin - center;
+		float a = glm::dot(ray.direction, ray.direction);
+		float b = 2.0f * glm::dot(oc, ray.direction);
+		float c = glm::dot(oc, oc) - radius * radius;
+		float discriminant = b * b - 4 * a * c;
+
+		if (discriminant < 0) return { false, 0 };
+		else {
+			float t = (-b - glm::sqrt(discriminant)) / (2.0f * a);
+			if (t > 0.001f) return { true, t };
+			else return { false, 0 };
+		}
+	}
+};
+
+class Camera {
+public:
+
+	vec3 eye;
+	vec3 u, v, w;
+	float l=-0.1, r=0.1, b=-0.1, t=0.1, d=0.1;
+
+	Camera(const vec3& e, const vec3& u, const vec3& v, const vec3& w) : eye(e), u(u),v(v),w(w) {}
+
+	Ray getRay(int i, int j) const {
+		float u = l + (r - l) * (i + 0.5f) / Width;
+		float v = b + (t - b) * (j + 0.5f) / Height;
+		return { eye, glm::normalize(glm::vec3(u,v,-d)) };
+	}
+
+	void p() {
+		std::cout << eye.x << eye.y<< eye.z << l << d;
+	}
+};
+
+
+
 
 
 
 void render()
 {
+	float max = -1;
+	float min = 100;
+
 	//Create our image. We don't want to do this in 
 	//the main loop since this may be too slow and we 
 	//want a responsive display of our beautiful image.
 	//Instead we draw to another buffer and copy this to the 
 	//framebuffer using glDrawPixels(...) every refresh
+	Surface* s1 = new Sphere(vec3(-4.0f, 0.0f, -7.0f), 1.0f);
+	Surface* s2 = new Sphere(vec3(0.0f, 0.0f, -7.0f), 2.0f);
+	Surface* s3 = new Sphere(vec3(4.0f, 0.0f, -7.0f), 1.0f);
+	Surface* p1 = new Plane(vec3( 0,1,0 ), 2);
+
+	Camera* c = new Camera(vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1));
+
+
 	OutputImage.clear();
 	for (int j = 0; j < Height; ++j) 
 	{
 		for (int i = 0; i < Width; ++i) 
 		{
+			
 			// ---------------------------------------------------
 			// --- Implement your code here to generate the image
 			// ---------------------------------------------------
 
 			// draw a red rectangle in the center of the image
-			vec3 color = glm::vec3(0.5f, 0.5f, 0.5f); // grey color [0,1] in RGB channel
+			vec3 color = glm::vec3(0.0f, 0.0f, 0.0f); // grey color [0,1] in RGB channel
 			
-			if (i > Width / 4 && i < 3 * Width / 4 
-				&& j > Height / 4 && j < 3 * Height / 4)
-			{
-				color = glm::vec3(1.0f, 0.0f, 0.0f); // red color [0,1] in RGB channel
-			}
+			
+			Ray ray = c->getRay(i, j);
+			
+
+			/*max = s1->intersect(ray).distance > max ? s1->intersect(ray).distance : max;
+			min = s1->intersect(ray).distance > 0 ? s1->intersect(ray).distance < min ? s1->intersect(ray).distance : min : min;*/
+
+			if (s1->intersect(ray).hit)color = glm::vec3(1.0f, 1.0f, 1.0f);
+			if (s2->intersect(ray).hit)color = glm::vec3(1.0f, 1.0f, 1.0f);
+			if (s3->intersect(ray).hit)color = glm::vec3(1.0f, 1.0f, 1.0f);
+			if (p1->intersect(ray).hit)color = glm::vec3(1.0f, 1.0f, 1.0f);
 			
 			// set the color
 			OutputImage.push_back(color.x); // R
 			OutputImage.push_back(color.y); // G
 			OutputImage.push_back(color.z); // B
+
+			
+			
+			
 		}
 	}
+	
+	delete s1;
+	delete s2;
+	delete s3;
+	delete p1;
+	delete c;
+	//std::cout <<max<<"    "<<min;
 }
 
 
@@ -89,6 +198,9 @@ void resize_callback(GLFWwindow*, int nw, int nh)
 
 int main(int argc, char* argv[])
 {
+
+	
+
 	// -------------------------------------------------
 	// Initialize Window
 	// -------------------------------------------------
