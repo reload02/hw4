@@ -54,7 +54,7 @@ public:
 			float t = -(glm::dot(normal, ray.origin) + d) / denom;
 			if (t >= 0.001f) return { true, t };
 		}
-		return { false, 0 };
+		return { false, 0 };// 광선과 평면이 만나는지 여부 계산 + 거리 계산
 	}
 };
 
@@ -79,7 +79,7 @@ public:
 			if (t > 0.001f) return { true, t };
 			else return { false, 0 };
 		}
-	}
+	}// 구와 평면이 만나는지 여부 계산 + 거리 계산
 };
 
 class Camera {
@@ -95,11 +95,8 @@ public:
 		float u = l + (r - l) * (i + 0.5f) / Width;
 		float v = b + (t - b) * (j + 0.5f) / Height;
 		return { eye, glm::normalize(glm::vec3(u,v,-d)) };
-	}
+	} // 해당 위치에서 카메라가 볼수있는  광선 계산
 
-	void p() {
-		std::cout << eye.x << eye.y<< eye.z << l << d;
-	}
 };
 
 
@@ -117,12 +114,16 @@ void render()
 	//want a responsive display of our beautiful image.
 	//Instead we draw to another buffer and copy this to the 
 	//framebuffer using glDrawPixels(...) every refresh
+
+
+	// 필요한 객체 생성
+
 	Surface* s1 = new Sphere(vec3(-4.0f, 0.0f, -7.0f), 1.0f);
 	Surface* s2 = new Sphere(vec3(0.0f, 0.0f, -7.0f), 2.0f);
 	Surface* s3 = new Sphere(vec3(4.0f, 0.0f, -7.0f), 1.0f);
 	Surface* p1 = new Plane(vec3( 0,1,0 ), 2);
 
-	Camera* c = new Camera(vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1));
+	Camera* c = new Camera(vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1)); 
 
 
 	OutputImage.clear();
@@ -145,6 +146,9 @@ void render()
 			/*max = s1->intersect(ray).distance > max ? s1->intersect(ray).distance : max;
 			min = s1->intersect(ray).distance > 0 ? s1->intersect(ray).distance < min ? s1->intersect(ray).distance : min : min;*/
 
+
+			// 광선과 물체가 부딪히는지 확인 후 색 부여
+
 			if (s1->intersect(ray).hit)color = glm::vec3(1.0f, 1.0f, 1.0f);
 			if (s2->intersect(ray).hit)color = glm::vec3(1.0f, 1.0f, 1.0f);
 			if (s3->intersect(ray).hit)color = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -165,7 +169,7 @@ void render()
 	delete s2;
 	delete s3;
 	delete p1;
-	delete c;
+	delete c;   // 사용한 객체 제거
 	//std::cout <<max<<"    "<<min;
 }
 
